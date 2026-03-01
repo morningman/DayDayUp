@@ -33,9 +33,68 @@ const elModalNew = document.getElementById('modal-new-template');
 const elModalEditTpl = document.getElementById('modal-edit-template');
 const elModalDelete = document.getElementById('modal-confirm-delete');
 const elModalEdit = document.getElementById('modal-edit-item');
+const elModalSavedPlans = document.getElementById('modal-saved-plans');
+const elModalSavePlan = document.getElementById('modal-save-plan');
+const elSavedPlanList = document.getElementById('saved-plan-list');
+const elSavedPlanEmpty = document.getElementById('saved-plan-empty');
+const elModalCustomDialog = document.getElementById('modal-custom-dialog');
 
 // 待删除模版 ID
 let pendingDeleteId = null;
+
+// ===== 通用自定义对话框 =====
+function showDialog({ title = '提示', message = '', confirmText = '确定', cancelText = '取消', showCancel = false, danger = false } = {}) {
+    return new Promise((resolve) => {
+        const elTitle = document.getElementById('custom-dialog-title');
+        const elMessage = document.getElementById('custom-dialog-message');
+        const elConfirm = document.getElementById('btn-custom-dialog-confirm');
+        const elCancel = document.getElementById('btn-custom-dialog-cancel');
+        const elClose = document.getElementById('modal-close-custom-dialog');
+
+        elTitle.textContent = title;
+        elMessage.textContent = message;
+        elConfirm.textContent = confirmText;
+        elCancel.textContent = cancelText;
+        elCancel.style.display = showCancel ? '' : 'none';
+
+        // 切换危险样式
+        if (danger) {
+            elConfirm.className = 'btn btn-danger';
+        } else {
+            elConfirm.className = 'btn btn-confirm';
+        }
+
+        function cleanup(result) {
+            elConfirm.removeEventListener('click', onConfirm);
+            elCancel.removeEventListener('click', onCancel);
+            elClose.removeEventListener('click', onCancel);
+            elModalCustomDialog.removeEventListener('click', onOverlay);
+            elModalCustomDialog.classList.remove('active');
+            resolve(result);
+        }
+
+        function onConfirm() { cleanup(true); }
+        function onCancel() { cleanup(false); }
+        function onOverlay(e) { if (e.target === elModalCustomDialog) cleanup(false); }
+
+        elConfirm.addEventListener('click', onConfirm);
+        elCancel.addEventListener('click', onCancel);
+        elClose.addEventListener('click', onCancel);
+        elModalCustomDialog.addEventListener('click', onOverlay);
+
+        elModalCustomDialog.classList.add('active');
+    });
+}
+
+// 快捷方法：提示框（仅 OK）
+function showAlert(message, title = '提示') {
+    return showDialog({ title, message });
+}
+
+// 快捷方法：确认框（OK + 取消）
+function showConfirm(message, { title = '确认', danger = false } = {}) {
+    return showDialog({ title, message, showCancel: true, confirmText: '确定', danger });
+}
 
 // ===== 初始化 =====
 async function init() {
@@ -108,7 +167,7 @@ async function saveCustomTemplate(tpl) {
         });
     } catch (e) {
         console.error('保存模版失败:', e);
-        alert('保存模版失败，请检查服务器是否正常运行');
+        showAlert('保存模版失败，请检查服务器是否正常运行', '❌ 错误');
     }
 }
 
@@ -121,7 +180,7 @@ async function deleteTemplateFromServer(id) {
         });
     } catch (e) {
         console.error('删除模版失败:', e);
-        alert('删除模版失败，请检查服务器是否正常运行');
+        showAlert('删除模版失败，请检查服务器是否正常运行', '❌ 错误');
     }
 }
 
@@ -134,7 +193,7 @@ async function updateTemplateOnServer(tpl) {
         });
     } catch (e) {
         console.error('更新模版失败:', e);
-        alert('更新模版失败，请检查服务器是否正常运行');
+        showAlert('更新模版失败，请检查服务器是否正常运行', '❌ 错误');
     }
 }
 
@@ -247,7 +306,7 @@ async function saveEditTemplate() {
     const desc = document.getElementById('edit-tpl-desc').value.trim();
 
     if (!name) {
-        alert('请输入活动名称');
+        showAlert('请输入活动名称', '⚠️ 提示');
         return;
     }
 
@@ -467,7 +526,7 @@ async function saveNewTemplate() {
     const desc = document.getElementById('tpl-desc').value.trim();
 
     if (!name) {
-        alert('请输入活动名称');
+        showAlert('请输入活动名称', '⚠️ 提示');
         return;
     }
 
@@ -490,7 +549,7 @@ async function saveNewTemplate() {
 // ===== 打印 =====
 function preparePrint() {
     if (planItems.length === 0) {
-        alert('请先添加活动到计划中');
+        showAlert('请先添加活动到计划中', '⚠️ 提示');
         return;
     }
 
@@ -519,11 +578,145 @@ function preparePrint() {
 }
 
 // ===== 清空计划 =====
-function clearPlan() {
+async function clearPlan() {
     if (planItems.length === 0) return;
-    if (!confirm('确定要清空所有计划吗？')) return;
+    const ok = await showConfirm('确定要清空所有计划吗？', { title: '⚠️ 清空计划', danger: true });
+    if (!ok) return;
     planItems = [];
     renderPlan();
+}
+
+// ===== 保存计划 =====
+function openSavePlanModal() {
+    if (planItems.length === 0) {
+        showAlert('请先添加活动到计划中', '⚠️ 提示');
+        return;
+    }
+    document.getElementById('save-plan-name').value = '';
+    elModalSavePlan.classList.add('active');
+    // 自动聚焦输入框
+    setTimeout(() => document.getElementById('save-plan-name').focus(), 100);
+}
+
+function closeSavePlanModal() {
+    elModalSavePlan.classList.remove('active');
+}
+
+async function confirmSavePlan() {
+    const name = document.getElementById('save-plan-name').value.trim();
+    if (!name) {
+        showAlert('请输入计划名称', '⚠️ 提示');
+        return;
+    }
+
+    const plan = {
+        id: 'plan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name,
+        items: planItems.map(item => ({ ...item })),
+        createdAt: new Date().toISOString(),
+    };
+
+    try {
+        await fetch('/api/plans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(plan),
+        });
+        closeSavePlanModal();
+        showAlert('计划已保存！', '✅ 成功');
+    } catch (e) {
+        console.error('保存计划失败:', e);
+        showAlert('保存计划失败，请检查服务器是否正常运行', '❌ 错误');
+    }
+}
+
+// ===== 加载已保存计划 =====
+async function openSavedPlansModal() {
+    elModalSavedPlans.classList.add('active');
+    await renderSavedPlans();
+}
+
+function closeSavedPlansModal() {
+    elModalSavedPlans.classList.remove('active');
+}
+
+async function renderSavedPlans() {
+    let plans = [];
+    try {
+        const res = await fetch('/api/plans');
+        plans = await res.json();
+    } catch (e) {
+        console.error('加载已保存计划失败:', e);
+    }
+
+    // 清除旧的卡片（保留 empty 提示）
+    const oldCards = elSavedPlanList.querySelectorAll('.saved-plan-card');
+    oldCards.forEach(el => el.remove());
+
+    elSavedPlanEmpty.style.display = plans.length === 0 ? 'block' : 'none';
+
+    // 按创建时间倒序显示
+    plans.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    plans.forEach(plan => {
+        const card = document.createElement('div');
+        card.className = 'saved-plan-card';
+
+        const itemCount = plan.items ? plan.items.length : 0;
+        const totalMin = plan.items ? plan.items.reduce((sum, it) => sum + (it.duration || 0), 0) : 0;
+        const dateStr = plan.createdAt ? new Date(plan.createdAt).toLocaleString('zh-CN') : '';
+
+        card.innerHTML = `
+            <div class="saved-plan-info">
+                <div class="saved-plan-name">📋 ${plan.name}</div>
+                <div class="saved-plan-meta">${itemCount} 项活动 · 共 ${totalMin} 分钟 · ${dateStr}</div>
+            </div>
+            <div class="saved-plan-actions">
+                <button class="saved-plan-btn load-btn" title="加载此计划">加载</button>
+                <button class="saved-plan-btn delete-btn" title="删除此计划">删除</button>
+            </div>
+        `;
+
+        // 加载按钮
+        card.querySelector('.load-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            loadSavedPlan(plan);
+        });
+
+        // 删除按钮
+        card.querySelector('.delete-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteSavedPlan(plan.id);
+        });
+
+        elSavedPlanList.appendChild(card);
+    });
+}
+
+async function loadSavedPlan(plan) {
+    if (planItems.length > 0) {
+        const ok = await showConfirm('当前计划不为空，加载将覆盖当前计划，确定继续吗？', { title: '⚠️ 覆盖确认' });
+        if (!ok) return;
+    }
+    planItems = plan.items.map(item => ({ ...item }));
+    renderPlan();
+    closeSavedPlansModal();
+}
+
+async function deleteSavedPlan(id) {
+    const ok = await showConfirm('确定要删除这个已保存的计划吗？', { title: '⚠️ 删除计划', danger: true });
+    if (!ok) return;
+    try {
+        await fetch('/api/plans/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+        });
+        await renderSavedPlans();
+    } catch (e) {
+        console.error('删除计划失败:', e);
+        showAlert('删除计划失败，请检查服务器是否正常运行', '❌ 错误');
+    }
 }
 
 // ===== 事件绑定 =====
@@ -567,6 +760,17 @@ function bindEvents() {
     // 清空
     document.getElementById('btn-clear-plan').addEventListener('click', clearPlan);
 
+    // 保存计划
+    document.getElementById('btn-save-plan').addEventListener('click', openSavePlanModal);
+    document.getElementById('modal-close-save-plan').addEventListener('click', closeSavePlanModal);
+    document.getElementById('btn-cancel-save-plan').addEventListener('click', closeSavePlanModal);
+    document.getElementById('btn-confirm-save-plan').addEventListener('click', confirmSavePlan);
+
+    // 加载已保存计划
+    document.getElementById('btn-load-plan').addEventListener('click', openSavedPlansModal);
+    document.getElementById('modal-close-saved-plans').addEventListener('click', closeSavedPlansModal);
+    document.getElementById('btn-close-saved-plans').addEventListener('click', closeSavedPlansModal);
+
     // 点击遮罩关闭弹窗
     elModalNew.addEventListener('click', (e) => {
         if (e.target === elModalNew) closeNewTemplateModal();
@@ -588,7 +792,17 @@ function bindEvents() {
             closeEditTemplateModal();
             closeDeleteModal();
             closeEditModal();
+            closeSavePlanModal();
+            closeSavedPlansModal();
         }
+    });
+
+    // 点击遮罩关闭保存/加载弹窗
+    elModalSavePlan.addEventListener('click', (e) => {
+        if (e.target === elModalSavePlan) closeSavePlanModal();
+    });
+    elModalSavedPlans.addEventListener('click', (e) => {
+        if (e.target === elModalSavedPlans) closeSavedPlansModal();
     });
 }
 

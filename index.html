@@ -59,6 +59,8 @@
             <div class="panel-header">
                 <h2>📅 今日计划</h2>
                 <div class="plan-actions">
+                    <button class="btn btn-save" id="btn-save-plan">💾 保存</button>
+                    <button class="btn btn-load" id="btn-load-plan">📂 加载</button>
                     <button class="btn btn-clear" id="btn-clear-plan">🗑️ 清空</button>
                     <button class="btn btn-print" id="btn-print">🖨️ 打印计划</button>
                 </div>
@@ -201,6 +203,61 @@
             <div class="modal-footer">
                 <button class="btn btn-cancel" id="btn-cancel-edit">取消</button>
                 <button class="btn btn-confirm" id="btn-confirm-edit">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 已保存计划弹窗 ===== -->
+    <div class="modal-overlay" id="modal-saved-plans">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h3>📂 已保存的计划</h3>
+                <button class="modal-close" id="modal-close-saved-plans">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="saved-plan-list" id="saved-plan-list">
+                    <p class="saved-plan-empty" id="saved-plan-empty">暂无已保存的计划</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-close-saved-plans">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 保存计划弹窗 ===== -->
+    <div class="modal-overlay" id="modal-save-plan">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>💾 保存当前计划</h3>
+                <button class="modal-close" id="modal-close-save-plan">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="save-plan-name">计划名称</label>
+                    <input type="text" id="save-plan-name" placeholder="例如：周末晚间计划" maxlength="30">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-cancel-save-plan">取消</button>
+                <button class="btn btn-confirm" id="btn-confirm-save-plan">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 通用自定义对话框 ===== -->
+    <div class="modal-overlay" id="modal-custom-dialog">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 id="custom-dialog-title">提示</h3>
+                <button class="modal-close" id="modal-close-custom-dialog">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="custom-dialog-message" id="custom-dialog-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-custom-dialog-cancel" style="display:none;">取消</button>
+                <button class="btn btn-confirm" id="btn-custom-dialog-confirm">确定</button>
             </div>
         </div>
     </div>

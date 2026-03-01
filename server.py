@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 PORT = 8080
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 TEMPLATES_FILE = os.path.join(DATA_DIR, 'custom_templates.json')
+PLANS_FILE = os.path.join(DATA_DIR, 'saved_plans.json')
 
 
 def ensure_data_dir():
@@ -18,6 +19,9 @@ def ensure_data_dir():
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(TEMPLATES_FILE):
         with open(TEMPLATES_FILE, 'w', encoding='utf-8') as f:
+            json.dump([], f, ensure_ascii=False)
+    if not os.path.exists(PLANS_FILE):
+        with open(PLANS_FILE, 'w', encoding='utf-8') as f:
             json.dump([], f, ensure_ascii=False)
 
 
@@ -36,6 +40,21 @@ def save_templates(templates):
         json.dump(templates, f, ensure_ascii=False, indent=2)
 
 
+def load_plans():
+    """读取已保存的计划"""
+    try:
+        with open(PLANS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def save_plans(plans):
+    """保存计划列表"""
+    with open(PLANS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(plans, f, ensure_ascii=False, indent=2)
+
+
 class RequestHandler(SimpleHTTPRequestHandler):
     """自定义请求处理器：静态文件 + API"""
 
@@ -46,6 +65,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # 获取自定义模版列表
             templates = load_templates()
             self._send_json(200, templates)
+        elif parsed.path == '/api/plans':
+            # 获取已保存的计划列表
+            plans = load_plans()
+            self._send_json(200, plans)
         else:
             # 静态文件服务
             super().do_GET()
@@ -103,6 +126,33 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self._send_json(200, body)
             else:
                 self._send_json(404, {'error': '模版未找到'})
+
+        elif parsed.path == '/api/plans':
+            # 新增已保存的计划
+            body = self._read_body()
+            if body is None:
+                return
+
+            plans = load_plans()
+            plans.append(body)
+            save_plans(plans)
+            self._send_json(201, body)
+
+        elif parsed.path == '/api/plans/delete':
+            # 删除已保存的计划
+            body = self._read_body()
+            if body is None:
+                return
+
+            plan_id = body.get('id')
+            if not plan_id:
+                self._send_json(400, {'error': '缺少计划 ID'})
+                return
+
+            plans = load_plans()
+            plans = [p for p in plans if p.get('id') != plan_id]
+            save_plans(plans)
+            self._send_json(200, {'message': '已删除'})
 
         else:
             self._send_json(404, {'error': '未找到'})

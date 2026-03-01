@@ -16,5 +16,14 @@
     "icon": "✋🏻",
     "desc": "",
     "isPreset": false
+  },
+  {
+    "id": "custom_1772381987290_sc5f",
+    "name": "复习预习",
+    "duration": 10,
+    "category": "语文",
+    "icon": "📌",
+    "desc": "复习语文及数学",
+    "isPreset": false
   }
 ]
