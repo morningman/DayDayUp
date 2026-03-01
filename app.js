@@ -78,7 +78,9 @@ function timeToMinutes(timeStr) {
 function minutesToTime(minutes) {
     const h = Math.floor(minutes / 60) % 24;
     const m = minutes % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const period = h < 12 ? 'AM' : 'PM';
+    const h12 = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+    return `${h12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
 function generateId() {
