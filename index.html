@@ -117,6 +117,70 @@
         </div>
     </div>
 
+    <!-- ===== 编辑模版弹窗 ===== -->
+    <div class="modal-overlay" id="modal-edit-template">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ 编辑模版</h3>
+                <button class="modal-close" id="modal-close-edit-tpl">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-tpl-id">
+                <div class="form-group">
+                    <label for="edit-tpl-name">活动名称</label>
+                    <input type="text" id="edit-tpl-name" placeholder="例如：课外阅读" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="edit-tpl-duration">默认时长（分钟）</label>
+                    <input type="number" id="edit-tpl-duration" value="20" min="5" max="120" step="5">
+                </div>
+                <div class="form-group">
+                    <label for="edit-tpl-category">分类</label>
+                    <select id="edit-tpl-category">
+                        <option value="语文">语文</option>
+                        <option value="数学">数学</option>
+                        <option value="英语">英语</option>
+                        <option value="练琴">练琴</option>
+                        <option value="体育">体育</option>
+                        <option value="休息">休息</option>
+                        <option value="生活">生活</option>
+                        <option value="活动">活动</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-tpl-icon">图标</label>
+                    <input type="text" id="edit-tpl-icon" placeholder="输入一个 emoji，如 📖" maxlength="4">
+                </div>
+                <div class="form-group">
+                    <label for="edit-tpl-desc">默认说明（可选）</label>
+                    <input type="text" id="edit-tpl-desc" placeholder="例如：练字 P39-42" maxlength="50">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-cancel-edit-tpl">取消</button>
+                <button class="btn btn-confirm" id="btn-confirm-edit-tpl">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 删除确认弹窗 ===== -->
+    <div class="modal-overlay" id="modal-confirm-delete">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>⚠️ 确认删除</h3>
+                <button class="modal-close" id="modal-close-delete">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="delete-confirm-text">确定要删除模版「<span id="delete-tpl-name"></span>」吗？</p>
+                <p class="delete-confirm-hint">删除后不可恢复</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-cancel-delete">取消</button>
+                <button class="btn btn-danger" id="btn-confirm-delete">确认删除</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== 编辑活动弹窗 ===== -->
     <div class="modal-overlay" id="modal-edit-item">
         <div class="modal">

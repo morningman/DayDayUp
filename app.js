@@ -30,7 +30,12 @@ const elPrintTableBody = document.getElementById('print-table-body');
 
 // Modals
 const elModalNew = document.getElementById('modal-new-template');
+const elModalEditTpl = document.getElementById('modal-edit-template');
+const elModalDelete = document.getElementById('modal-confirm-delete');
 const elModalEdit = document.getElementById('modal-edit-item');
+
+// 待删除模版 ID
+let pendingDeleteId = null;
 
 // ===== 初始化 =====
 async function init() {
@@ -118,6 +123,19 @@ async function deleteTemplateFromServer(id) {
     }
 }
 
+async function updateTemplateOnServer(tpl) {
+    try {
+        await fetch('/api/templates/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tpl),
+        });
+    } catch (e) {
+        console.error('更新模版失败:', e);
+        alert('更新模版失败，请检查服务器是否正常运行');
+    }
+}
+
 function renderTemplates(filter = 'all') {
     elTemplateList.innerHTML = '';
     const filtered = filter === 'all'
@@ -135,13 +153,29 @@ function renderTemplates(filter = 'all') {
                 <div class="template-meta">${tpl.category} · ${tpl.desc || ''}</div>
             </div>
             <span class="template-duration">${tpl.duration}分钟</span>
-            ${!tpl.isPreset ? `<button class="template-delete" data-id="${tpl.id}" title="删除此模版">✕</button>` : ''}
+            <div class="template-actions">
+                <button class="template-action-btn template-edit" data-id="${tpl.id}" title="编辑模版">✏️</button>
+                <button class="template-action-btn template-copy" data-id="${tpl.id}" title="复制模版">📋</button>
+                ${!tpl.isPreset ? `<button class="template-action-btn template-delete" data-id="${tpl.id}" title="删除模版">🗑️</button>` : ''}
+            </div>
         `;
 
-        // 点击添加到计划
+        // 点击添加到计划（排除操作按钮区域）
         card.addEventListener('click', (e) => {
-            if (e.target.classList.contains('template-delete')) return;
+            if (e.target.closest('.template-actions')) return;
             addToPlan(tpl);
+        });
+
+        // 编辑模版
+        card.querySelector('.template-edit').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openEditTemplateModal(tpl.id);
+        });
+
+        // 复制模版
+        card.querySelector('.template-copy').addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyTemplate(tpl.id);
         });
 
         // 删除自定义模版
@@ -149,7 +183,8 @@ function renderTemplates(filter = 'all') {
         if (delBtn) {
             delBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                deleteTemplate(tpl.id);
+                e.preventDefault();
+                openDeleteModal(tpl.id);
             });
         }
 
@@ -157,16 +192,98 @@ function renderTemplates(filter = 'all') {
     });
 }
 
-async function deleteTemplate(id) {
-    if (!confirm('确定要删除这个模版吗？')) return;
+function openDeleteModal(id) {
+    const tpl = allTemplates.find(t => t.id === id);
+    if (!tpl) return;
+    pendingDeleteId = id;
+    document.getElementById('delete-tpl-name').textContent = tpl.name;
+    elModalDelete.classList.add('active');
+}
+
+function closeDeleteModal() {
+    elModalDelete.classList.remove('active');
+    pendingDeleteId = null;
+}
+
+async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
     allTemplates = allTemplates.filter(t => t.id !== id);
     await deleteTemplateFromServer(id);
     renderTemplates(getCurrentFilter());
+    closeDeleteModal();
 }
 
 function getCurrentFilter() {
     const active = document.querySelector('.filter-btn.active');
     return active ? active.dataset.category : 'all';
+}
+
+// ===== 编辑模版弹窗 =====
+function openEditTemplateModal(id) {
+    const tpl = allTemplates.find(t => t.id === id);
+    if (!tpl) return;
+    document.getElementById('edit-tpl-id').value = tpl.id;
+    document.getElementById('edit-tpl-name').value = tpl.name;
+    document.getElementById('edit-tpl-duration').value = tpl.duration;
+    document.getElementById('edit-tpl-category').value = tpl.category;
+    document.getElementById('edit-tpl-icon').value = tpl.icon;
+    document.getElementById('edit-tpl-desc').value = tpl.desc || '';
+    elModalEditTpl.classList.add('active');
+}
+
+function closeEditTemplateModal() {
+    elModalEditTpl.classList.remove('active');
+}
+
+async function saveEditTemplate() {
+    const id = document.getElementById('edit-tpl-id').value;
+    const name = document.getElementById('edit-tpl-name').value.trim();
+    const duration = parseInt(document.getElementById('edit-tpl-duration').value) || 20;
+    const category = document.getElementById('edit-tpl-category').value;
+    const icon = document.getElementById('edit-tpl-icon').value.trim() || '📌';
+    const desc = document.getElementById('edit-tpl-desc').value.trim();
+
+    if (!name) {
+        alert('请输入活动名称');
+        return;
+    }
+
+    const tpl = allTemplates.find(t => t.id === id);
+    if (!tpl) return;
+
+    tpl.name = name;
+    tpl.duration = Math.max(5, Math.min(120, duration));
+    tpl.category = category;
+    tpl.icon = icon;
+    tpl.desc = desc;
+
+    // 仅自定义模版同步到服务器
+    if (!tpl.isPreset) {
+        await updateTemplateOnServer(tpl);
+    }
+
+    renderTemplates(getCurrentFilter());
+    closeEditTemplateModal();
+}
+
+async function copyTemplate(id) {
+    const tpl = allTemplates.find(t => t.id === id);
+    if (!tpl) return;
+
+    const newTpl = {
+        id: generateId(),
+        name: tpl.name + '（副本）',
+        duration: tpl.duration,
+        category: tpl.category,
+        icon: tpl.icon,
+        desc: tpl.desc || '',
+        isPreset: false,
+    };
+
+    allTemplates.push(newTpl);
+    await saveCustomTemplate(newTpl);
+    renderTemplates(getCurrentFilter());
 }
 
 // ===== 计划编排 =====
@@ -427,6 +544,16 @@ function bindEvents() {
     document.getElementById('btn-cancel-new').addEventListener('click', closeNewTemplateModal);
     document.getElementById('btn-confirm-new').addEventListener('click', saveNewTemplate);
 
+    // 编辑模版
+    document.getElementById('modal-close-edit-tpl').addEventListener('click', closeEditTemplateModal);
+    document.getElementById('btn-cancel-edit-tpl').addEventListener('click', closeEditTemplateModal);
+    document.getElementById('btn-confirm-edit-tpl').addEventListener('click', saveEditTemplate);
+
+    // 删除确认
+    document.getElementById('modal-close-delete').addEventListener('click', closeDeleteModal);
+    document.getElementById('btn-cancel-delete').addEventListener('click', closeDeleteModal);
+    document.getElementById('btn-confirm-delete').addEventListener('click', confirmDelete);
+
     // 编辑活动
     document.getElementById('modal-close-edit').addEventListener('click', closeEditModal);
     document.getElementById('btn-cancel-edit').addEventListener('click', closeEditModal);
@@ -442,6 +569,12 @@ function bindEvents() {
     elModalNew.addEventListener('click', (e) => {
         if (e.target === elModalNew) closeNewTemplateModal();
     });
+    elModalEditTpl.addEventListener('click', (e) => {
+        if (e.target === elModalEditTpl) closeEditTemplateModal();
+    });
+    elModalDelete.addEventListener('click', (e) => {
+        if (e.target === elModalDelete) closeDeleteModal();
+    });
     elModalEdit.addEventListener('click', (e) => {
         if (e.target === elModalEdit) closeEditModal();
     });
@@ -450,6 +583,8 @@ function bindEvents() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeNewTemplateModal();
+            closeEditTemplateModal();
+            closeDeleteModal();
             closeEditModal();
         }
     });

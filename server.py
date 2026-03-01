@@ -80,6 +80,30 @@ class RequestHandler(SimpleHTTPRequestHandler):
             save_templates(templates)
             self._send_json(200, {'message': '已删除'})
 
+        elif parsed.path == '/api/templates/update':
+            # 更新自定义模版
+            body = self._read_body()
+            if body is None:
+                return
+
+            template_id = body.get('id')
+            if not template_id:
+                self._send_json(400, {'error': '缺少模版 ID'})
+                return
+
+            templates = load_templates()
+            updated = False
+            for i, t in enumerate(templates):
+                if t.get('id') == template_id:
+                    templates[i] = body
+                    updated = True
+                    break
+            if updated:
+                save_templates(templates)
+                self._send_json(200, body)
+            else:
+                self._send_json(404, {'error': '模版未找到'})
+
         else:
             self._send_json(404, {'error': '未找到'})
 
