@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shawn 每日学习计划</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- ===== 页面头部 ===== -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1>🌟 Shawn 每日学习计划 🌟</h1>
+            <div class="header-controls">
+                <div class="control-group">
+                    <label for="plan-date">📅 日期</label>
+                    <input type="date" id="plan-date">
+                </div>
+                <div class="control-group">
+                    <label for="start-time">⏰ 开始时间</label>
+                    <input type="time" id="start-time" value="19:00">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== 主体区域 ===== -->
+    <main class="app-main">
+        <!-- 左栏：活动模版库 -->
+        <section class="panel template-panel">
+            <div class="panel-header">
+                <h2>📋 活动模版库</h2>
+                <button class="btn btn-add" id="btn-new-template" title="新建活动模版">＋ 新建</button>
+            </div>
+            <div class="template-filters">
+                <button class="filter-btn active" data-category="all">全部</button>
+                <button class="filter-btn" data-category="语文">语文</button>
+                <button class="filter-btn" data-category="数学">数学</button>
+                <button class="filter-btn" data-category="英语">英语</button>
+                <button class="filter-btn" data-category="练琴">练琴</button>
+                <button class="filter-btn" data-category="休息">休息</button>
+                <button class="filter-btn" data-category="生活">生活</button>
+                <button class="filter-btn" data-category="体育">体育</button>
+                <button class="filter-btn" data-category="活动">活动</button>
+            </div>
+            <div class="template-list" id="template-list">
+                <!-- 动态生成 -->
+            </div>
+        </section>
+
+        <!-- 右栏：今日计划 -->
+        <section class="panel plan-panel">
+            <div class="panel-header">
+                <h2>📅 今日计划</h2>
+                <div class="plan-actions">
+                    <button class="btn btn-clear" id="btn-clear-plan">🗑️ 清空</button>
+                    <button class="btn btn-print" id="btn-print">🖨️ 打印计划</button>
+                </div>
+            </div>
+            <div class="plan-list" id="plan-list">
+                <div class="plan-empty" id="plan-empty">
+                    <p>👈 从左侧选择活动添加到计划中</p>
+                    <p class="hint">点击活动模版即可添加</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== 新建模版弹窗 ===== -->
+    <div class="modal-overlay" id="modal-new-template">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✨ 新建活动模版</h3>
+                <button class="modal-close" id="modal-close-new">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="tpl-name">活动名称</label>
+                    <input type="text" id="tpl-name" placeholder="例如：课外阅读" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="tpl-duration">默认时长（分钟）</label>
+                    <input type="number" id="tpl-duration" value="20" min="5" max="120" step="5">
+                </div>
+                <div class="form-group">
+                    <label for="tpl-category">分类</label>
+                    <select id="tpl-category">
+                        <option value="语文">语文</option>
+                        <option value="数学">数学</option>
+                        <option value="英语">英语</option>
+                        <option value="练琴">练琴</option>
+                        <option value="体育">体育</option>
+                        <option value="休息">休息</option>
+                        <option value="生活">生活</option>
+                        <option value="活动">活动</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tpl-icon">图标</label>
+                    <input type="text" id="tpl-icon" placeholder="输入一个 emoji，如 📖" maxlength="4">
+                </div>
+                <div class="form-group">
+                    <label for="tpl-desc">默认说明（可选）</label>
+                    <input type="text" id="tpl-desc" placeholder="例如：练字 P39-42" maxlength="50">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-cancel-new">取消</button>
+                <button class="btn btn-confirm" id="btn-confirm-new">保存模版</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 编辑活动弹窗 ===== -->
+    <div class="modal-overlay" id="modal-edit-item">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ 编辑活动</h3>
+                <button class="modal-close" id="modal-close-edit">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="edit-duration">时长（分钟）</label>
+                    <input type="number" id="edit-duration" min="5" max="120" step="5">
+                </div>
+                <div class="form-group">
+                    <label for="edit-note">备注说明</label>
+                    <input type="text" id="edit-note" placeholder="例如：练字 P39-42" maxlength="50">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="btn-cancel-edit">取消</button>
+                <button class="btn btn-confirm" id="btn-confirm-edit">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 打印区域 ===== -->
+    <div class="print-area" id="print-area">
+        <div class="print-header">
+            <h1>🌟 Shawn 每日学习计划 🌟</h1>
+            <p class="print-date" id="print-date"></p>
+        </div>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th class="col-index">序号</th>
+                    <th class="col-time">时间</th>
+                    <th class="col-category">分类</th>
+                    <th class="col-task">事项</th>
+                    <th class="col-done">完成</th>
+                    <th class="col-note">备注</th>
+                </tr>
+            </thead>
+            <tbody id="print-table-body">
+            </tbody>
+        </table>
+        <div class="print-footer">
+            <p>💪 今日寄语：加油，Shawn！你是最棒的！ 💪</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
