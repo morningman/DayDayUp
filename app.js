@@ -314,7 +314,7 @@ async function saveEditTemplate() {
     if (!tpl) return;
 
     tpl.name = name;
-    tpl.duration = Math.max(5, Math.min(120, duration));
+    tpl.duration = Math.max(5, duration);
     tpl.category = category;
     tpl.icon = icon;
     tpl.desc = desc;
@@ -513,7 +513,7 @@ function saveEdit() {
     if (editingPlanIndex < 0) return;
     const duration = parseInt(document.getElementById('edit-duration').value) || 20;
     const note = document.getElementById('edit-note').value.trim();
-    planItems[editingPlanIndex].duration = Math.max(5, Math.min(120, duration));
+    planItems[editingPlanIndex].duration = Math.max(5, duration);
     planItems[editingPlanIndex].note = note;
     closeEditModal();
     renderPlan();
@@ -548,7 +548,7 @@ async function saveNewTemplate() {
     const newTpl = {
         id: generateId(),
         name,
-        duration: Math.max(5, Math.min(120, duration)),
+        duration: Math.max(5, duration),
         category,
         icon,
         desc,
