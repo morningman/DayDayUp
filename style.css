@@ -591,6 +591,21 @@ body::before {
 .plan-name {
     font-size: 0.9rem;
     font-weight: 500;
+    cursor: text;
+    padding: 1px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.plan-name:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.plan-name:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .plan-note {
@@ -982,6 +997,26 @@ body::before {
     }
 }
 
+/* ===== Print Layout (JS toggle, before @media print kicks in) ===== */
+body.printing .app-header,
+body.printing .app-main {
+    display: none !important;
+}
+
+body.printing .modal-overlay {
+    display: none !important;
+}
+
+body.printing .print-area {
+    display: block !important;
+}
+
+body.printing {
+    background: white !important;
+    min-height: 0 !important;
+    height: auto !important;
+}
+
 /* ===== Print Styles ===== */
 @media print {
     * {
@@ -993,15 +1028,22 @@ body::before {
         background: white !important;
         color: #222 !important;
         font-size: 12pt;
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     body::before {
-        display: none;
+        display: none !important;
     }
 
     .app-header,
     .app-main {
         display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 
     .modal-overlay {
@@ -1098,7 +1140,6 @@ body::before {
     }
 
     @page {
-        size: A4 landscape;
         margin: 10mm;
     }
 }

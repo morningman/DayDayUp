@@ -18,12 +18,21 @@
     "isPreset": false
   },
   {
-    "id": "custom_1772381987290_sc5f",
-    "name": "复习预习",
+    "id": "custom_1772466266846_x0fq",
+    "name": "语文作业",
     "duration": 10,
     "category": "语文",
     "icon": "📌",
-    "desc": "复习语文及数学",
+    "desc": "群消息",
+    "isPreset": false
+  },
+  {
+    "id": "custom_1772466489888_8isr",
+    "name": "复习预习",
+    "duration": 20,
+    "category": "活动",
+    "icon": "📌",
+    "desc": "复习语文、数学",
     "isPreset": false
   }
 ]

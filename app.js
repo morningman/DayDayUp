@@ -404,7 +404,7 @@ function renderPlan() {
             <span class="plan-time">${times[index].start} - ${times[index].end}</span>
             <span class="plan-icon">${item.icon}</span>
             <div class="plan-details">
-                <div class="plan-name">${item.name}</div>
+                <div class="plan-name" contenteditable="true" data-index="${index}">${item.name}</div>
                 ${item.note ? `<div class="plan-note">${item.note}</div>` : ''}
             </div>
             <div class="plan-item-actions">
@@ -426,6 +426,21 @@ function renderPlan() {
 
         // Delete button
         el.querySelector('.plan-item-btn.delete').addEventListener('click', () => removePlanItem(index));
+
+        // Inline edit plan name
+        const nameEl = el.querySelector('.plan-name');
+        nameEl.addEventListener('blur', () => {
+            const newName = nameEl.textContent.trim();
+            if (newName && newName !== planItems[index].name) {
+                planItems[index].name = newName;
+            } else {
+                nameEl.textContent = planItems[index].name;
+            }
+        });
+        nameEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); }
+            if (e.key === 'Escape') { nameEl.textContent = planItems[index].name; nameEl.blur(); }
+        });
 
         elPlanList.appendChild(el);
     });
@@ -574,7 +589,19 @@ function preparePrint() {
         elPrintTableBody.appendChild(tr);
     });
 
-    window.print();
+    // 先切换到打印布局，让 Chrome 正确计算页数
+    document.body.classList.add('printing');
+
+    const cleanup = () => {
+        document.body.classList.remove('printing');
+        window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+
+    // 等待一帧让浏览器完成布局计算
+    requestAnimationFrame(() => {
+        window.print();
+    });
 }
 
 // ===== 清空计划 =====
